@@ -41,6 +41,34 @@
             flex-direction: column;
         }
 
+        /* Home Button (Top Left) */
+        #home-link {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background-color: var(--pkm-red);
+            color: white;
+            border: 3px solid var(--gb-dark);
+            padding: 8px 10px;
+            font-size: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+
+        #home-link:hover {
+            background-color: #ff5f56;
+            transform: scale(1.05);
+        }
+
+        #home-link:active {
+            transform: scale(0.95);
+        }
+
         /* Top Screen Area */
         #screen {
             height: 300px;
@@ -117,6 +145,9 @@
             font-size: 10px;
             transition: all 0.1s;
             outline: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         button:hover {
@@ -131,6 +162,12 @@
 
         button.full-width {
             grid-column: span 2;
+        }
+
+        button.port-btn {
+            background-color: #5878b0;
+            color: #fff;
+            border-color: #101010;
         }
 
         /* Results Display */
@@ -177,12 +214,19 @@
             button {
                 font-size: 8px;
             }
+            #home-link {
+                padding: 5px 7px;
+                font-size: 6px;
+            }
         }
     </style>
 </head>
 <body>
 
 <div id="game-container">
+    <!-- Top Left Home Button -->
+    <a href="https://github.com/shw168989-art/portpolio/" target="_blank" id="home-link">HOME</a>
+
     <div id="screen">
         <div id="intro-content">
             <div class="title-text">POKEMON MBTI</div>
@@ -213,26 +257,25 @@
         <button id="btn-opt1" class="hidden" onclick="handleChoice(0)">그렇다</button>
         <button id="btn-opt2" class="hidden" onclick="handleChoice(1)">아니다</button>
 
-        <!-- Restart Button -->
-        <button id="btn-restart" class="hidden full-width" onclick="location.reload()">처음부터 다시</button>
+        <!-- Portfolio Link Button -->
+        <button id="btn-portfolio" class="full-width port-btn" onclick="openPortfolio()">포트폴리오 이동 (LINK)</button>
+
+        <!-- Restart Button (Visible at result only) -->
+        <button id="btn-restart" class="hidden full-width" onclick="restartTest()">테스트 다시하기</button>
     </div>
 </div>
 
 <script>
     const questions = [
-        // E vs I
         { q: "모르는 사람에게 먼저 인사를 건네는 편인가?", type: "EI", icon: "👋" },
         { q: "주말에는 밖으로 나가는 게 에너지가 생기나?", type: "EI", icon: "🏙️" },
         { q: "여러 명이 모인 파티를 즐기는 편인가?", type: "EI", icon: "🎊" },
-        // S vs N
         { q: "상상보다는 현실적인 사실을 더 믿는 편인가?", type: "SN", icon: "📊" },
         { q: "포켓몬 기술을 쓸 때 명중률 수치를 중요시하나?", type: "SN", icon: "🎯" },
         { q: "일기를 쓸 때 구체적인 행동 위주로 적는가?", type: "SN", icon: "✍️" },
-        // T vs F
         { q: "친구의 고민을 들으면 해결책부터 생각나는가?", type: "TF", icon: "💡" },
         { q: "감정적인 위로보다는 논리적인 조언이 도움되나?", type: "TF", icon: "⚖️" },
         { q: "게임에서 이기는 것이 즐기는 것보다 중요한가?", type: "TF", icon: "🏆" },
-        // J vs P
         { q: "여행을 가기 전 시간 단위로 계획을 세우는가?", type: "JP", icon: "📅" },
         { q: "방 정리가 항상 깔끔하게 되어 있는 편인가?", type: "JP", icon: "🧹" },
         { q: "정해진 규칙을 따르는 것이 마음이 편한가?", type: "JP", icon: "📜" }
@@ -273,6 +316,8 @@
     const btnRestart = document.getElementById('btn-restart');
 
     function startGame() {
+        currentStep = 0;
+        scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
         introContent.classList.add('hidden');
         btnStart.classList.add('hidden');
         gameContent.classList.remove('hidden');
@@ -294,11 +339,11 @@
 
     function handleChoice(choiceIdx) {
         const q = questions[currentStep];
-        const typePair = q.type; // e.g., "EI"
+        const typePair = q.type;
         
-        if (choiceIdx === 0) { // "Yes"
+        if (choiceIdx === 0) {
             scores[typePair[0]]++;
-        } else { // "No"
+        } else {
             scores[typePair[1]]++;
         }
 
@@ -325,6 +370,16 @@
         document.getElementById('result-sprite').innerText = result.icon;
         document.getElementById('result-pkm-name').innerText = `당신은 '${result.name}' 타입!`;
         dialogueText.innerText = `결과가 나왔군! ${result.desc} 자, 이제 모험을 떠나게!`;
+    }
+
+    function restartTest() {
+        resultContent.classList.add('hidden');
+        btnRestart.classList.add('hidden');
+        startGame();
+    }
+
+    function openPortfolio() {
+        window.open('https://github.com/shw168989-art/portpolio/', '_blank');
     }
 </script>
 
