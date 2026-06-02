@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전남대학교 맛집 평점 및 지도 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --jnu-green: #0B5137;
+            --jnu-green-hover: #083d29;
+        }
+        .bg-jnu { background-color: var(--jnu-green); }
+        .text-jnu { color: var(--jnu-green); }
+        .border-jnu { border-color: var(--jnu-green); }
+        .hover\:bg-jnu:hover { background-color: var(--jnu-green-hover); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <div class="min-h-screen flex">
+        <aside class="w-64 bg-slate-900 text-white flex flex-col shrink-0">
+            <div class="p-5 bg-slate-950 flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-white text-lg">J</div>
+                <span class="text-lg font-bold tracking-wider text-emerald-400">JNU 맛집 DB</span>
+            </div>
+            <nav class="flex-1 p-4 space-y-1">
+                <button onclick="filterLocation('전체')" id="menu-all" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-emerald-800 text-white font-medium transition-colors text-left cursor-pointer">
+                    <span>📊</span> <span>전체 대시보드</span>
+                </button>
+                <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">지역별 필터</div>
+                <button onclick="filterLocation('정문')" id="menu-front" class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
+                    <span>📍</span> <span>정문 맛집</span>
+                </button>
+                <button onclick="filterLocation('후문')" id="menu-back" class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
+                    <span>📍</span> <span>후문 맛집</span>
+                </button>
+                <button onclick="filterLocation('상대')" id="menu-business" class="w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
+                    <span>📍</span> <span>상대 맛집</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-800 text-xs text-slate-400 text-center">
+                © 2026 JNU Vibe Coding
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 shrink-0">
+                <h1 id="dashboard-title" class="text-xl font-bold text-slate-900">전체 맛집 관리 대시보드</h1>
+                <div class="flex items-center space-x-4">
+                    <button onclick="sortRecommendations()" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-xs cursor-pointer">
+                        ⭐ 평점 높은 순 정렬
+                    </button>
+                    <button onclick="showRandomPick()" class="px-4 py-2 text-sm font-medium text-white bg-jnu hover:bg-jnu-hover rounded-lg transition-colors shadow-sm cursor-pointer">
+                        🎲 오늘 뭐 먹지? 추천
+                    </button>
+                </div>
+            </header>
+
+            <div class="p-8 space-y-6 max-w-7xl w-full mx-auto">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">총 등록 맛집</p>
+                            <p id="widget-total-count" class="text-3xl font-bold text-slate-900 mt-1">0개</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-xl text-emerald-600">🏢</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">최고 평점 맛집</p>
+                            <p id="widget-top-restaurant" class="text-xl font-bold text-slate-900 mt-2 truncate max-w-[200px]">데이터 없음</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-xl text-amber-500">👑</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">전체 평균 평점</p>
+                            <p id="widget-avg-rating" class="text-3xl font-bold text-slate-900 mt-1">0.00 / 5.0</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-xl text-blue-600">📈</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+                        <div class="pb-4 mb-4 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-800 text-sm tracking-wide uppercase text-slate-500">📍 캠퍼스 구역별 맛집 비율</h3>
+                        </div>
+                        <div class="relative h-64 flex items-center justify-center">
+                            <canvas id="locationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+                        <div class="pb-4 mb-4 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-800 text-sm tracking-wide uppercase text-slate-500">⭐ 카테고리별 평균 평점</h3>
+                        </div>
+                        <div class="relative h-64">
+                            <canvas id="ratingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                        <h2 class="font-bold text-slate-800">캠퍼스 맛집 위치 지도 (실시간 연동)</h2>
+                    </div>
+                    <iframe id="map-frame" class="w-full h-80 border-0 bg-slate-100" 
+                        src="https://maps.google.com/maps?q=%EC%A0%84%EB%82%A8%EB%8C%80%ED%95%99%EA%B5%90&t=&z=15&ie=UTF-8&iwloc=&output=embed">
+                    </iframe>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <h2 class="font-bold text-slate-800">맛집 실시간 관리 목록 (가게 클릭 시 지도 이동)</h2>
+                        <span id="current-filter-badge" class="px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-md border border-emerald-200">전체보기</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-200 bg-slate-100 text-slate-600 text-xs font-semibold uppercase tracking-wider">
+                                    <th class="py-3 px-6 w-16 text-center">번호</th>
+                                    <th class="py-3 px-6">맛집 이름</th>
+                                    <th class="py-3 px-6 w-24">위치</th>
+                                    <th class="py-3 px-6 w-28">카테고리</th>
+                                    <th class="py-3 px-6">대표 메뉴</th>
+                                    <th class="py-3 px-6 w-24 text-center">평점</th>
+                                    <th class="py-3 px-6 w-36 text-center">평점 조정</th>
+                                </tr>
+                            </thead>
+                            <tbody id="restaurant-table-body" class="divide-y divide-slate-200 text-sm text-slate-700">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="recommend-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl transform scale-95 transition-transform duration-300 relative mx-4">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-xl cursor-pointer">×</button>
+            <div class="text-center space-y-4">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-3xl mb-2 animate-bounce">😋</div>
+                <p class="text-emerald-700 font-semibold text-sm uppercase tracking-wider">오늘의 추천 맛집!</p>
+                <h3 id="modal-name" class="text-2xl font-bold text-slate-900">맛집 이름</h3>
+                <div class="flex justify-center space-x-2 text-xs">
+                    <span id="modal-location" class="px-2 py-1 bg-slate-100 text-slate-600 rounded-md">위치</span>
+                    <span id="modal-category" class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md">카테고리</span>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <p class="text-xs text-slate-400">추천 메뉴</p>
+                    <p id="modal-menu" class="font-semibold text-slate-800 text-base mt-0.5">메뉴 이름</p>
+                </div>
+                <div class="text-amber-500 font-bold text-lg flex items-center justify-center space-x-1">
+                    <span>⭐</span> <span id="modal-rating">0.0</span>
+                </div>
+                <button onclick="closeModal()" class="w-full py-3 bg-jnu hover:bg-jnu-hover text-white font-medium rounded-xl transition-colors shadow-sm cursor-pointer mt-2">
+                    확인 완료! 맛있게 드세요
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let restaurants = [
+            { id: 1, name: "대왕김밥", location: "정문", category: "분식", menu: "새우튀김롤, 라볶이", rating: 4.8, query: "광주 북구 대왕김밥" },
+            { id: 2, name: "골목대장", location: "후문", category: "한식", menu: "제육볶음, 김치찌개", rating: 4.5, query: "광주 북구 골목대장" },
+            { id: 3, name: "당당", location: "후문", category: "양식", menu: "매콤 크림 파스타", rating: 4.6, query: "광주 북구 당당" },
+            { id: 4, name: "골목식당", location: "상대", category: "백반", menu: "불백 정식", rating: 4.2, query: "전남대 상대 골목식당" },
+            { id: 5, name: "벼락", location: "후문", category: "냉면/고기", menu: "물냉면 세트", rating: 4.4, query: "전남대 후문 벼락" },
+            { id: 6, name: "일신김밥", location: "상대", category: "분식", menu: "참치김밥, 수제비", rating: 4.0, query: "전남대 상대 일신김밥" },
+            { id: 7, name: "티놀자", location: "후문", category: "디저트", menu: "생크림 와플", rating: 4.7, query: "전남대 후문 티놀자" },
+            { id: 8, name: "신당명가", location: "후문", category: "분식", menu: "탕수육, 라볶이", rating: 4.3, query: "전남대 후문 신당명가" },
+            { id: 9, name: "마로니에", location: "상대", category: "돈까스", menu: "경양식 돈까스", rating: 4.1, query: "전남대 상대 마로니에" },
+            { id: 10, name: "오라구", location: "후문", category: "양식", menu: "전남대 후문 오라구", rating: 4.5, query: "전남대 후문 오라구" }
+        ];
+
+        let currentFilter = "전체";
+        let locationChartInstance = null;
+        let ratingChartInstance = null;
+
+        window.onload = function() {
+            updateDashboard();
+        };
+
+        function changeMapLocation(searchQuery, zoomLevel = 16) {
+            const mapFrame = document.getElementById('map-frame');
+            mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(searchQuery)}&t=&z=${zoomLevel}&ie=UTF-8&iwloc=&output=embed`;
+        }
+
+        function updateDashboard() {
+            updateWidgets();
+            renderTable();
+            renderCharts(); // 차트 최신 데이터 갱신
+        }
+
+        function updateWidgets() {
+            document.getElementById('widget-total-count').innerText = `${restaurants.length}개`;
+            let totalRating = restaurants.reduce((sum, item) => sum + item.rating, 0);
+            let avgRating = (totalRating / restaurants.length).toFixed(2);
+            document.getElementById('widget-avg-rating').innerText = `${avgRating} / 5.0`;
+
+            let topRes = restaurants.reduce((prev, current) => (prev.rating > current.rating) ? prev : current);
+            document.getElementById('widget-top-restaurant').innerText = `${topRes.name} (${topRes.rating.toFixed(1)}점)`;
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById('restaurant-table-body');
+            tableBody.innerHTML = '';
+
+            let filteredList = currentFilter === "전체" ? restaurants : restaurants.filter(item => item.location === currentFilter);
+
+            if (filteredList.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">데이터가 없습니다.</td></tr>`;
+                return;
+            }
+
+            filteredList.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors cursor-pointer";
+                
+                tr.innerHTML = `
+                    <td onclick="changeMapLocation('${item.query}', 17)" class="py-3.5 px-6 text-center text-slate-400 font-medium">${index + 1}</td>
+                    <td onclick="changeMapLocation('${item.query}', 17)" class="py-3.5 px-6 font-bold text-slate-900 text-emerald-800 hover:underline">${item.name} 🗺️</td>
+                    <td onclick="changeMapLocation('${item.query}', 17)" class="py-3.5 px-6">
+                        <span class="px-2 py-0.5 text-xs font-medium rounded-md ${getLocationClass(item.location)}">
+                            ${item.location}
+                        </span>
+                    </td>
+                    <td onclick="changeMapLocation('${item.query}', 17)" class="py-3.5 px-6 text-slate-500">${item.category}</td>
+                    <td onclick="changeMapLocation('${item.query}', 17)" class="py-3.5 px-6 text-slate-600 truncate max-w-[200px]">${item.menu}</td>
+                    <td class="py-3.5 px-6 text-center font-bold text-amber-500">⭐ ${item.rating.toFixed(1)}</td>
+                    <td class="py-3.5 px-6 text-center">
+                        <div class="inline-flex rounded-lg border border-slate-200 overflow-hidden shadow-xs bg-white">
+                            <button onclick="event.stopPropagation(); changeRating(${item.id}, -0.1)" class="px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-bold border-r border-slate-200 transition-colors cursor-pointer">-</button>
+                            <button onclick="event.stopPropagation(); changeRating(${item.id}, 0.1)" class="px-2.5 py-1 text-emerald-600 hover:bg-emerald-50 font-bold transition-colors cursor-pointer">+</button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        /* 📊 Chart.js 데이터 수집 및 렌더링 로직 추가 */
+        function renderCharts() {
+            // 1. 구역별 카운트 계산
+            let counts = { '정문': 0, '후문': 0, '상대': 0 };
+            restaurants.forEach(r => { if(counts[r.location] !== undefined) counts[r.location]++; });
+
+            // 2. 카테고리별 평균 평점 계산
+            let categoryData = {};
+            restaurants.forEach(r => {
+                if(!categoryData[r.category]) categoryData[r.category] = { total: 0, count: 0 };
+                categoryData[r.category].total += r.rating;
+                categoryData[r.category].count++;
+            });
+            let categories = Object.keys(categoryData);
+            let avgRatings = categories.map(cat => (categoryData[cat].total / categoryData[cat].count).toFixed(2));
+
+            // 도넛 차트 생성/갱신
+            const ctx1 = document.getElementById('locationChart').getContext('2d');
+            if(locationChartInstance) locationChartInstance.destroy();
+            locationChartInstance = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['정문 맛집', '후문 맛집', '상대 맛집'],
+                    datasets: [{
+                        data: [counts['정문'], counts['후문'], counts['상대']],
+                        backgroundColor: ['#3b82f6', '#a855f7', '#f97316'],
+                        borderWidth: 2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // 막대 차트 생성/갱신
+            const ctx2 = document.getElementById('ratingChart').getContext('2d');
+            if(ratingChartInstance) ratingChartInstance.destroy();
+            ratingChartInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: '평균 평점 (5.0 만점)',
+                        data: avgRatings,
+                        backgroundColor: '#0B5137',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 5 } }
+                }
+            });
+        }
+
+        function getLocationClass(location) {
+            switch(location) {
+                case '정문': return 'bg-blue-50 text-blue-700 border border-blue-100';
+                case '후문': return 'bg-purple-50 text-purple-700 border border-purple-100';
+                case '상대': return 'bg-orange-50 text-orange-700 border border-orange-100';
+                default: return 'bg-slate-100 text-slate-700';
+            }
+        }
+
+        function filterLocation(location) {
+            currentFilter = location;
+            document.getElementById('dashboard-title').innerText = `${location} 맛집 관리 대시보드`;
+            document.getElementById('current-filter-badge').innerText = location === '전체' ? '전체보기' : `${location} 필터링`;
+            
+            const menus = { '전체': 'menu-all', '정문': 'menu-front', '후문': 'menu-back', '상대': 'menu-business' };
+
+            Object.keys(menus).forEach(key => {
+                const btn = document.getElementById(menus[key]);
+                if (key === location) {
+                    btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-emerald-800 text-white font-medium transition-colors text-left cursor-pointer";
+                } else {
+                    btn.className = "w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer";
+                }
+            });
+
+            if (location === "전체") changeMapLocation("전남대학교", 15);
+            else changeMapLocation(`전남대학교 ${location}`, 16);
+
+            updateDashboard();
+        }
+
+        function changeRating(id, amount) {
+            let item = restaurants.find(r => r.id === id);
+            if (item) {
+                let newRating = item.rating + amount;
+                if (newRating >= 0 && newRating <= 5) {
+                    item.rating = Math.round(newRating * 10) / 10;
+                    updateDashboard();
+                }
+            }
+        }
+
+        function sortRecommendations() {
+            restaurants.sort((a, b) => b.rating - a.rating);
+            updateDashboard();
+        }
+
+        function showRandomPick() {
+            const randomIndex = Math.floor(Math.random() * restaurants.length);
+            const pick = restaurants[randomIndex];
+
+            document.getElementById('modal-name').innerText = pick.name;
+            document.getElementById('modal-location').innerText = pick.location;
+            document.getElementById('modal-category').innerText = pick.category;
+            document.getElementById('modal-menu').innerText = pick.menu;
+            document.getElementById('modal-rating').innerText = pick.rating.toFixed(1);
+
+            const modal = document.getElementById('recommend-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 50);
+
+            changeMapLocation(pick.query, 17);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('recommend-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+    </script>
+</body>
+</html>
